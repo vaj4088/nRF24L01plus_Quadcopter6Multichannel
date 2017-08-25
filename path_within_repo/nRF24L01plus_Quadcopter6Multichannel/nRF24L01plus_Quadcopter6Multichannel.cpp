@@ -3,13 +3,8 @@
 
 #include "RF24.h"
 
-// Comment to not get Serial debug message.
-// Uncomment for Serial debug message.
-// #define RC_DEBUG
-
 const unsigned long version = 20170824 ;
 const char versionSuffix = 'a' ;
-//#define myRF24_NOTRANSMIT
 
 RF24 myRF24(8, 10);
 
@@ -102,7 +97,6 @@ void initRF24(RF24 rf24) {
 	rf24.openReadingPipe(5, myAddress[4]);
 
 	// RF24_PA_MIN RF24_PA_LOW RF24_PA_HIGH RF24_PA_MAX
-//	rf24.setPALevel(RF24_PA_HIGH);
 	rf24.setPALevel(RF24_PA_MIN) ;  //  Works better when close.
 
 	rf24.setDataRate(RF24_1MBPS);
@@ -112,7 +106,6 @@ void initRF24(RF24 rf24) {
 	rf24.enableAckPayload();
 
 	rf24.setCRCLength(RF24_CRC_8);
-//	rf24.startListening() ;
 }
 
 void clearFlagsAndWrite(RF24 rf24, uint8_t * msg, uint8_t msgLength) {
@@ -132,11 +125,9 @@ void clearFlagsAndWrite(RF24 rf24, uint8_t * msg, uint8_t msgLength) {
 
 boolean pairingSuccessful(RF24 rf24, uint8_t * msg, uint8_t msgLength) {
 //	rf24.write(msg, msgLength) ;
-#ifndef myRF24_NOTRANSMIT
  	moveCursorTo(16, 1) ;
  	//  Write for pairing.
 	clearFlagsAndWrite(rf24, msg, msgLength) ;
-#endif
 	long responseTimer = millis();
 	while (1) {
 		if (rf24.available()) {
@@ -160,33 +151,15 @@ boolean pairingSuccessful(RF24 rf24, uint8_t * msg, uint8_t msgLength) {
 // pairing with the quadcopter
 // this is a blocking procedure
 void pair() {
-#ifdef RC_DEBUG
-	Serial.print("pairing");
-#endif
 	myRF24.openWritingPipe(pairingAddress);
 	myRF24.openReadingPipe(0, pairingAddress);
 
-#ifdef RC_DEBUG
-	uint8_t heartbeatCounter = 0;
-#endif
 
 	while(1) {
 		myRF24.flush_tx();
 		if(pairingSuccessful(myRF24, pairingMessage, sizeof(pairingMessage))) {
-#ifdef RC_DEBUG
-			Serial.println(String(millis()) +
-					"milliseconds, had successful pairing.");
-#endif
 			break;
 		} else { // if(myRF24.write(pairingMessage, sizeof(pairingMessage))) {
-#ifdef RC_DEBUG
-			if (heartbeatCounter++ < 9) {
-				Serial.print(".");
-			} else { // if (heartbeatCounter++ < 9) {
-				Serial.println(".");
-				heartbeatCounter = 0;
-			} // } else { // if (heartbeatCounter++ < 9) {
-#endif
 			delay(500);
 		} // } else { // if(myRF24.write(pairingMessage, sizeof(pairingMessage))) {
 	} // while(1) {
@@ -201,15 +174,11 @@ float seconds() {
 }
 
 void setChannel(unsigned int x) {
-//	myRF24.stopListening() ;
 	myRF24.setChannel(x) ;
-//	myRF24.startListening() ;
 }
 
 // send a command to the quadcopter
 void sendCommand(RF24 rf24) {
-//	enum UserCommandStates {reset, idle, throttleUp, positive1, negative1,
-//		positive2, negative2, zero} ;
 	static boolean firstTime = true ;
 	static int itemSelect = 1 ;
 	userCommandTimeSeconds = seconds() ;
@@ -354,31 +323,9 @@ void sendCommand(RF24 rf24) {
     commandMessage[5] = userCommand[5] + conversionOffset ;
 	commandMessage[6] = userCommand[6] + conversionOffset ;
 	commandMessage[7] = userCommand[7] ;
-////	if (
-////		(sizeof(commandMessage)!=8 )||
-////		(userCommand[0]!=5)||
-////		(commandMessage[0]!=5)
-////		) {
-////	moveCursorTo(24, 1) ;
-////		Serial.print("sizeof(commandMessage)=") ;
-////		Serial.print(sizeof(commandMessage)) ;
-////	Serial.println(".") ;
-////	Serial.print("   userCommand[0]=") ;
-////	Serial.print(userCommand[0]) ;
-////	Serial.print(".  0x") ;
-////	Serial.println(userCommand[0], HEX) ;
-////	Serial.print("commandMessage[0]=") ;
-////	Serial.print(commandMessage[0]) ;
-////	Serial.print(".  0x") ;
-////	Serial.println(commandMessage[0], HEX) ;
-////	while (true) ;  ////  Intentional infinite loop.
-////}
-//	myRF24.write(commandMessage, sizeof(commandMessage), 0) ;
-#ifndef myRF24_NOTRANSMIT
  	moveCursorTo(16, 1) ;
 	//  Write for commands.
 	clearFlagsAndWrite(rf24, commandMessage, sizeof(commandMessage)) ;
-#endif
 } // void sendCommand() {
 
 /*
@@ -476,39 +423,11 @@ void processLeftArrow() {
 
 // prepare a command
 void getCommandData() {
-	// check if we get data
-#ifdef RC_DEBUG
-	int throttle = commandMessage[0] ;
-	int yaw      = commandMessage[1] ;
-	int pitch    = commandMessage[3] ;
-	int roll     = commandMessage[4] ;
-	boolean flipFlag = (commandMessage[7] && 15) == 15 ;
-
-	String delimiter = "\t";
-
-	String outString = "";
-
-	outString += String(throttle) + delimiter;
-	outString += String(yaw) + delimiter;
-	outString += String(pitch) + delimiter;
-	outString += String(roll) + delimiter;
-	outString += String(flipFlag);
-	Serial.println(outString);
-#endif
-/****************************************************************/
-#ifdef RC_DEBUG
-	throttle =   5 ;
-	yaw      = 128 ;
-	pitch    = 128 ;
-	roll     = 128 ;
-	flipFlag = false ;
-#else
 	int throttle =   5 ;
 	int yaw      = 128 ;
 	int pitch    = 128 ;
 	int roll     = 128 ;
 	boolean flipFlag = false ;
-#endif
 
 	// put the calculated values in the command message
 	commandMessage[0] = throttle;
@@ -573,9 +492,6 @@ void localScreenSetup() {
 	//
 	// Width for each item is 9 characters (9 columns).
 	//
-//	Serial.println(F("0-Full   Rotate            Fwd/Aft  Left/Rt")) ;
-//	Serial.print(  F("Throttle Yaw      Counter0 Pitch    Roll     ")) ;
-//	Serial.print(F("Counter1 Counter2 Flags")) ;
 	/*
 	  The message template according to Hamster Cage Drones:
 	  payload[0]=throttle;
