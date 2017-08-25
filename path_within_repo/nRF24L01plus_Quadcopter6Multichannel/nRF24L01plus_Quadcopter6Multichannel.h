@@ -7,13 +7,30 @@
 #ifndef _nRF24L01plus_Quadcopter6Multichannel_H_
 #define _nRF24L01plus_Quadcopter6Multichannel_H_
 #include "Arduino.h"
-//add your includes for the project nRF24L01plus_Quadcopter6Multichannel here
+//add your includes for the project nRF24L01plus_Quadcopter5Multichannel here
 
+
+#include "VT100_Control_Codes.h"
+#include "Arduino_Screen.h"
 
 //end of add your includes here
 
+enum RateStates{waiting, receivedEsc, receivedLeftSquareBracket} ;
+RateStates rateState = waiting ;
 
-//add your function definitions for the project nRF24L01plus_Quadcopter6Multichannel here
+enum UserCommandStates {reset, idle, throttleUp, positive1, negative1,
+	positive2, negative2, zero} ;
+
+UserCommandStates userCommandState = reset ;
+
+//add your function definitions for the project nRF24L01plus_Quadcopter2 here
+boolean screenUpdateItem(byte line, byte column, int value) ;
+boolean screenUpdate(int hotItemNumber, int item[8], byte x) ;
+  void processUserCommand(char c) ;
+  void processUpArrow() ;
+  void processDownArrow() ;
+  void processRightArrow() ;
+  void processLeftArrow() ;
 
 
 
